@@ -15,14 +15,14 @@ int Postprocess(ParametersType *Parameters, MatrixDataType *MatrixData, FemStruc
 	//		Paraview output to file
 	/************************************************************/
 	Paraview_Output(Parameters, FemStructs, FemFunctions);
-	Data_Output(Parameters, FemStructs, FemFunctions);
+
 	/*************************************************************/
 
 
 	/****************************************************************************************/
 		// 			Printing final result
 	/****************************************************************************************/
-	sprintf(FileName, "../03_output/%s_%s_%s_%s_%s_%s_%s_N%d_E%d.dat",Parameters->Experiments, Parameters->ProblemTitle,Parameters->StabilizationForm,Parameters->ShockCapture,
+	sprintf(FileName, "../03_output/%s_%s_%s_%s_%s_%s_N%d_E%d.dat",Parameters->ProblemTitle,Parameters->StabilizationForm,Parameters->ShockCapture,
 	        Parameters->h_Shock, Parameters->MatrixVectorProductScheme, Parameters->Preconditioner, Parameters->nnodes,Parameters->nel);
 	OutFile = myfopen(FileName,"w");
 	fprintf(OutFile, "\n\n======================= PROBLEM CHARACTERISTICS ========================\n\n");
@@ -46,7 +46,7 @@ int Postprocess(ParametersType *Parameters, MatrixDataType *MatrixData, FemStruc
 	fprintf(OutFile, "Scaling used: %s\n", Parameters->Scaling);
 	fprintf(OutFile, "Solver tolerance used: %E\n", Parameters->SolverTolerance);
 	fprintf(OutFile, "Non linear tolerance used: %E\n", Parameters->NonLinearTolerance);
-	fprintf(OutFile, "Number of %s iterations: %d\n", Parameters->Solver, Parameters->SolverIterations);
+	fprintf(OutFile, "Number of %s iterations: %d\n", Parameters->Solver, Parameters->iterations);
 	fprintf(OutFile, "\n========================================================================\n\n");
 	fclose(OutFile);
 
@@ -71,7 +71,7 @@ int Postprocess(ParametersType *Parameters, MatrixDataType *MatrixData, FemStruc
 	printf("Scaling used: %s\n", Parameters->Scaling);
 	printf("Solver tolerance used: %E\n", Parameters->SolverTolerance);
 	printf("Non linear tolerance used: %E\n", Parameters->NonLinearTolerance);
-	printf("Number of %s iterations: %d\n", Parameters->Solver, Parameters->SolverIterations);
+	printf("Number of %s iterations: %d\n", Parameters->Solver, Parameters->iterations);
 	printf("\n========================================================================\n\n");
 
 	/****************************************************************************************/
