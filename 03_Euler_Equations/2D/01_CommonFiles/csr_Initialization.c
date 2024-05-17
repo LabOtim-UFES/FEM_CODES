@@ -82,8 +82,8 @@ void csr_Initialization(ParametersType *Parameters, NodeType *Node, int **JA_out
 		}
 
 	}
-//	myfree(lm);
-//	myfree(lmaux);
+//	free(lm);
+//	free(lmaux);
 
 //	lm = NULL;
 //	lmaux = NULL;
@@ -98,7 +98,7 @@ void csr_Initialization(ParametersType *Parameters, NodeType *Node, int **JA_out
 		}
 	}
 
-	myfree(CSR_List);
+	free(CSR_List);
 
 	int *PermCSR = mycalloc("PermCSR of 'csr_Inititalization'",nnzero,sizeof(int));
 	int *perm = mycalloc("perm of 'csr_Initialization'",neq,sizeof(int));
@@ -139,10 +139,10 @@ void csr_Initialization(ParametersType *Parameters, NodeType *Node, int **JA_out
 		}
 	}
 
-	myfree(perm);	
-	myfree(invperm);	
-	myfree(PermCSR);
-	myfree(invPermCSR);
+	free(perm);	
+	free(invperm);	
+	free(PermCSR);
+	free(invPermCSR);
 	*lm_out = lm;
 	*lmaux_out = lmaux;
 	*CSR_by_Element_out = CSR_by_Element;
@@ -185,7 +185,7 @@ void csr_List_insertA(NodeListType **CSR_List, int I, int J, int *nnzero_out)
 			previous->next = new;
 		else if (current->J == J){
 			nnzero--;
-			myfree(new);
+			free(new);
 		}
 		else {
 			new->next = current;

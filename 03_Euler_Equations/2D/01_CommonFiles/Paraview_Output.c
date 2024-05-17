@@ -131,12 +131,12 @@ int Paraview_Output(ParametersType *Parameters, FemStructsType *FemStructs, FemF
 
 	fclose(OutFile);
 
-	myfree(rho); 
-	myfree(v1);
-	myfree(v2);
-	myfree(e); 
-	myfree(temp);
-	myfree(pres);
+	free(rho); 
+	free(v1);
+	free(v2);
+	free(e); 
+	free(temp);
+	free(pres);
 		
 	return 0;
 }

@@ -83,9 +83,9 @@ double Delta_YZBetaNMV(double tolerance, double *delta_old_NMV, double *gradUx, 
 	aux_delta = 0.5*delta1; 
 	delta = w*(aux_delta) + (1 - w)*delta_old_NMV[e];
 	delta_old_NMV[e] = delta;
-	myfree(AxgradUx);
-	myfree(AygradUy);
-	myfree(Z);
+	free(AxgradUx);
+	free(AygradUy);
+	free(Z);
 	
 	return delta;
 		

@@ -3,14 +3,11 @@
 int setStabilizationForm(ParametersType *Parameters,FemFunctionsType *FemFunctions, FemOtherFunctionsType *FemOtherFunctions)
 {
 	
-	if (strcasecmp(Parameters->StabilizationForm,"SUPG")==0){
-			FemOtherFunctions->Build = Build_K_F_SUPG;
+	if (strcasecmp(Parameters->StabilizationForm,"SUPG-PSPG")==0){
+			FemOtherFunctions->Build = Build_K_F_SUPG_PSPG;
 	}		
-	else if (strcasecmp(Parameters->StabilizationForm,"MS")==0){
-			FemOtherFunctions->Build = Build_K_F_MS;
-	}
-	else if (strcasecmp(Parameters->StabilizationForm,"MS_Time")==0){
-			FemOtherFunctions->Build = Build_K_F_MS_Time;
+	else if (strcasecmp(Parameters->StabilizationForm,"VMS-DCDD")==0){
+			FemOtherFunctions->Build = Build_K_F_VMS_DCDD;
 	}		
 	else {
 		printf("Stabilizantion form not defined!\n");

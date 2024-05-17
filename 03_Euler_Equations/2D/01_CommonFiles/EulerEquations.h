@@ -7,7 +7,6 @@
 #include <math.h>
 #include <time.h>
 #include "../../../00_CommonFiles/Solvers_and_Preconditioners/ilup.h"
-#include "../../../00_CommonFiles/Solvers_and_Preconditioners/amg_precond.h"
 
 #define NDIM 2            // number related to the dimension of the problem (2: two-dimensional, 3: three-dimensional)
 #define NNOEL 3           // number of nodes per element
@@ -48,7 +47,7 @@ typedef struct
 	char MatrixVectorProductScheme[200];   // the global matrix storage form
 	char StabilizationForm[200];           // type of stabilization method
 	char ShockCapture[200];            // type discontinuities capture Operator
-	char Preconditioner[1000];           // preconditioners: yes - use or not - don't use
+	char Preconditioner[200];           // preconditioners: yes - use or not - don't use
 	char Scaling[200];
 	char Experiments[200];
 	char StopMulticorrection[200];         // Fala se o loop espacial para pela norma ou por um numero fixo de iteracao - NORM: para pela norma; ITERATION: para pela iteracao
@@ -107,7 +106,6 @@ typedef struct
 	MAT *Ailu;
 	int *Perm;
 	int *invPerm;
-	AMG_precond_data *amg_precond_data;
 }MatrixDataType;
 
 typedef struct{

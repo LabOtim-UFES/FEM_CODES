@@ -37,11 +37,11 @@ void csr_Initialization(int nnodes, int nel, int *nnz_out, NodeType *Node, Eleme
 		while (current != NULL){
 			temp = current;		
 			current	= current->next;
-			myfree(temp);
+			free(temp);
 		}
 
 	}
-	myfree(List);
+	free(List);
 
 	for (I= 0; I<nnodes; I++){
 		for (J=0; J<counter[I]; J++){
@@ -84,7 +84,7 @@ void List_insert(NodeListType **List, int I, int J, int *counter)
 		if (current == NULL)
 			previous->next = new;
 		else if (current->J == J){
-			myfree(new);
+			free(new);
 			counter[I]--;
 		}
 		else {

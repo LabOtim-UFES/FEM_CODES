@@ -268,8 +268,8 @@ int uB_InitialSolution(ParametersType *Parameters, FemStructsType *FemStructs, F
 	
 		
 	// Liberacao dos espacos alocados
-	myfree(U);
-	myfree(dU);
+	free(U);
+	free(dU);
 	
 
 	return 0;
