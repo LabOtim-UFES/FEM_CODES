@@ -13,7 +13,7 @@ void setStopCriteria(ParametersType *Parameters, FemFunctionsType *FemFunctions)
 
 	if(strcasecmp(Parameters->StopAtSteadyState,"YES") == 0)
 		FemFunctions->StopTimeIntegration = StopBySteadyState;
-	else if(strcasecmp(Parameters->StopAtSteadyState,"NOT") == 0)
+	else if(strcasecmp(Parameters->StopAtSteadyState,"NO") == 0)
 		FemFunctions->StopTimeIntegration = StopByTime;
 	else{
 		printf("Stop time integration is not defined!\n");
@@ -68,7 +68,7 @@ int StopBySteadyState(ParametersType *Parameters, double *u, double *u_old, doub
 
 int StopByTime(ParametersType *Parameters, double *u, double *u_old, double t)
 {
-	if (fabs(Parameters->FinalTime-t) < 1e-15){
+	if (Parameters->FinalTime-t < 1e-10){
 		Parameters->CurrentTime = t;	
 		return 1;
 	}

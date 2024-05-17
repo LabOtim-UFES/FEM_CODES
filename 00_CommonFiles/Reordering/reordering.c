@@ -99,7 +99,7 @@ void reordering(ParametersType *Parameters, int *JA, int *IA, int *perm, int *Pe
 	int    	*info    = calloc (4,sizeof(int));
 	int   	*icptr	= calloc (n+1,sizeof(int));	
 	int   	*irn	= calloc (lirn,sizeof(int));	
-	int   	jcntl[2];		#include "../../../00_CommonFiles/MatrixVector_Operations/matvec.h"
+	int   	jcntl[2];		
 	int    	*iw    = calloc (2*n+2,sizeof(int));
 	int 	control;
 	double  weight[2];		
