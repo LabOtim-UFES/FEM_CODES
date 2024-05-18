@@ -1,55 +1,45 @@
 #include "solvers.h"
-#include "preconditioners.h"
 
 int pgmres (ParametersType *Parameters,	MatrixDataType *MatrixData, FemStructsType *FemStructs,
-			FemFunctionsType *FemFunctions)
+			FemFunctionsType *FemFunctions,	double *B, double *X)
 {
-
+	
 	int i, j, k, l, cont, kmax, lmax, neq;
-	double normb, normb2, ui2, uip12, r2, eps, r, rho, soma, h1, h2;
+	double normb, eps, r, rho, soma, h1, h2;
 	double tol;
-	double **u, **h;
-	double *c, *s, *y, *e, *z, *v, *B, *X;
+	double **u, *u_aux, **h, *h_aux;
+	double *c, *s, *y, *e, *z, *v;
 
 	kmax = Parameters->KrylovBasisVectorsQuantity;
-	lmax = Parameters->SolverMaxIter; //printf("SOLVER MAX ITER DENTRO GMRES: %d\n", lmax);
+	lmax = Parameters->LinearMaxIter;
 	neq = Parameters->neq;
 	tol = Parameters->SolverTolerance;
-	B = FemStructs->F;
-	X = FemStructs->u;
 
-/*	printf("\nVetor B=F Global dentro do solver\n");
-		for(i = 0; i <= neq; i++){
-			printf("%lf\n",B[i]);
-		}
-	getchar();*/
+	u = (double**) mycalloc("u of 'gmres'",kmax,sizeof(double));
+	u_aux = (double*) mycalloc("u_aux of 'gmres'",kmax*(neq+1),sizeof(double));
+	for (i = 0; i < kmax; i++)
+		u[i] = &u_aux[i*(neq+1)];
 
-	u = (double**) mycalloc("u of 'gmres'",kmax+1,sizeof(double));
-	//u_aux = (double*) mycalloc("u_aux of 'gmres'",(kmax+1)*(neq+1),sizeof(double));
-	for (i = 0; i < (kmax+1); i++){
-		u[i] = (double*) mycalloc("u[i] of 'gmres'",(neq+1),sizeof(double)); //&u_aux[i*(neq+1)];
-	}
-	h = (double**) mycalloc("h of 'gmres'",(kmax+1),sizeof(double*));
-	//h_aux = (double*) mycalloc("h_aux of 'gmres'", (kmax+1)*(kmax+1) ,sizeof(double*));
-	for (i = 0; i < (kmax+1); i++){
-		h[i] = (double*) mycalloc("h[i] of 'gmres'", (kmax+1) ,sizeof(double*)); //&h_aux[i*(kmax+1)];
-	}
-	e = (double*) mycalloc("e of 'gmres'",kmax+1,sizeof(double));
+	h = (double**) mycalloc("h of 'gmres'",kmax,sizeof(double*));
+	h_aux = (double*) mycalloc("h_aux of 'gmres'", kmax*kmax ,sizeof(double*));
+	for (i = 0; i < kmax; i++)
+		h[i] = &h_aux[i*kmax];
+
+	e = (double*) mycalloc("e of 'gmres'",kmax,sizeof(double));
 	c = (double*) mycalloc("c of 'gmres'",kmax,sizeof(double));
-	s = (double*) mycalloc("s of 'gmres'",kmax,sizeof(double));
+	s = (double*) mycalloc("s of 'gmres'",kmax,sizeof(double)); 
 	y = (double*) mycalloc("y of 'gmres'",kmax,sizeof(double));
 	v = (double*) mycalloc("z of 'gmres'",neq + 1,sizeof(double));
 	z = (double*) mycalloc("z of 'gmres'",neq + 1,sizeof(double));
-
 
 	// Inicializa matrizes e vetores com zero
 	dzero(neq, X);
 
 	// Calcula ||b||_2
-	normb2 = ddot(neq,B,B);
-	normb = sqrt(normb2);
+	normb = ddot(neq,B,B);
+	normb = sqrt(normb);
 
-	// Calcula eps = tol*||b||_2
+	// Calcula eps = tol*||b||_2 
 	eps = tol*normb;
 
 	l = 0;
@@ -57,19 +47,16 @@ int pgmres (ParametersType *Parameters,	MatrixDataType *MatrixData, FemStructsTy
 
 	do
 	{
-
-	//	printf("Entrou no primeiro DO!\n");
-
 		i = 0;
 		for(j = 0; j < kmax; j++)
 			dzero(neq, u[j]);
-
-		dcopy(neq, X, v); // v = X
-
+		
+		dcopy(neq, X, v);
+				
 		FemFunctions->precondR(Parameters,MatrixData,FemStructs,v,v);
 
 		// ui = AX
-		FemFunctions->ProductMatrixVector(Parameters, MatrixData, FemStructs, v, u[i]);
+		FemFunctions->mv(Parameters, MatrixData, FemStructs, v, u[i]);
 
 		// Preconditioning M u = z
 		FemFunctions->precond(Parameters, MatrixData, FemStructs, u[i], u[i]);
@@ -78,29 +65,27 @@ int pgmres (ParametersType *Parameters,	MatrixDataType *MatrixData, FemStructsTy
 		dscal(neq, -1.0, u[i]);          // ui = - ui = (b - ui) = (b - Ax)
 
 		// ei = ||ui||_2
-		ui2 = ddot(neq, u[i], u[i]);
-		e[i] = sqrt(ui2);
+		e[i] = ddot(neq, u[i], u[i]);
+		e[i] = sqrt(e[i]);
 
 		// ui = ui / ei
 		dscal(neq,1.0/e[i],u[i]);
 
 		rho = e[i];
 
+
 		do
 		{
-
-		//	printf("Entrou no segundo DO!");
-
 			cont++;
-
+			
 			dcopy(neq, u[i], v);
 
 			FemFunctions->precondR(Parameters,MatrixData,FemStructs,v,v);
 
 			// uj = ui+1 = A z
-			FemFunctions->ProductMatrixVector(Parameters, MatrixData, FemStructs, v, u[i+1]);
+			FemFunctions->mv(Parameters, MatrixData, FemStructs, v, u[i+1]);
 
-			// Preconditioning M ui+1 = z
+			// Preconditioning M ui+1 = z 
 			FemFunctions->precond(Parameters, MatrixData, FemStructs, u[i+1], u[i+1]);
 
 			// Ortogonalizacao de Gram-Schmidt
@@ -114,19 +99,19 @@ int pgmres (ParametersType *Parameters,	MatrixDataType *MatrixData, FemStructsTy
 			}
 
 			// hi+1,i = ||ui+1||
-			uip12 = ddot(neq, u[i+1], u[i+1]);
-			h[i+1][i] = sqrt(uip12);
+			h[i+1][i] = ddot(neq, u[i+1], u[i+1]);
+			h[i+1][i] = sqrt(h[i+1][i]);
 
 			// ui+1 = ui+1 / hi+1,i
 			dscal(neq, 1.0/h[i+1][i], u[i+1]);
 
-			// Algoritmo QR
+			// Algoritmo QR                                            
 			for (j = 0; j <= i-1; j++)
-			{
-				// hji = cj*hji + sj*hj+1,i
-				h1 =  c[j]*h[j][i] + s[j]*h[j+1][i];
+			{                                     
+				// hji = cj*hji + sj*hj+1,i                                          
+				h1 =  c[j]*h[j][i] + s[j]*h[j+1][i];                  
 
-				// hj+1,i = -sj*hji + cj*hj+1,i
+				// hj+1,i = -sj*hji + cj*hj+1,i                                          
 				h2 = -s[j]*h[j][i] + c[j]*h[j+1][i];
 
 				h[j][i] = h1;
@@ -134,8 +119,8 @@ int pgmres (ParametersType *Parameters,	MatrixDataType *MatrixData, FemStructsTy
 			}
 
 			// r = sqrt((hii)^2 + (hi+1,i)^2)
-			r2 = h[i][i]*h[i][i] + h[i+1][i]*h[i+1][i];
-			r = sqrt(r2);
+			r = h[i][i]*h[i][i] + h[i+1][i]*h[i+1][i];            
+			r = sqrt(r);
 
 			// ci = hii / r
 			c[i] = h[i][i] / r;
@@ -144,7 +129,7 @@ int pgmres (ParametersType *Parameters,	MatrixDataType *MatrixData, FemStructsTy
 			s[i] = h[i+1][i] / r;
 
 			// hii = r
-			h[i][i] = r;
+			h[i][i] = r;                                                   
 
 			// hi+1,i = 0.0
 			h[i+1][i] = 0.0;
@@ -156,11 +141,11 @@ int pgmres (ParametersType *Parameters,	MatrixDataType *MatrixData, FemStructsTy
 			e[i]   =  c[i]*e[i];
 
 			// rho = |ei+1|
-			rho = fabs(e[i+1]);
+			rho = fabs(e[i+1]);  
 
 			i++;
 		}
-		while ((rho > eps)&&(i < kmax));
+		while ((rho > eps)&&(i < kmax-1));
 
 		i--;
 
@@ -174,38 +159,35 @@ int pgmres (ParametersType *Parameters,	MatrixDataType *MatrixData, FemStructsTy
 			y[j] = (e[j] - soma)/h[j][j];
 		}
 
-		for (j = 0; j <= i; j++){
-			for (k = 0; k < neq; k++){
+		for (j = 0; j <= i; j++)
+			for (k = 0; k < neq; k++)
 				X[k] = X[k] + u[j][k]*y[j];
-			}
-		}
+
 		l++;
 
 	}while((rho > eps)&&(l<lmax));
 
-	#ifdef debug
+	#ifdef debug 	
 		printf(" Iteracoes GMRES: %d \n", cont);
 	#endif
-	// Parameters->ResGMRES = rho;
-	// Parameters->ContGMRES = cont;
-	Parameters->SolverIterations += cont;
+	Parameters->iterations += cont;
+	#ifdef SSNavierStokesEquations2D
+		Parameters->gmres++;
+	#endif
 
 	FemFunctions->precondR (Parameters, MatrixData, FemStructs, X, X);
 
-	for (i = 0; i < (kmax+1); i++){
-		myfree(u[i]);
-		myfree(h[i]);
-	}
-	//myfree(u_aux);
+	myfree(u_aux);
 	myfree(u);
-	//myfree(h_aux);
+	myfree(h_aux);
 	myfree(h);
-	myfree(e);
-	myfree(c);
+	myfree(e); 
+	myfree(c); 
 	myfree(s);
 	myfree(y);
 	myfree(v);
 	myfree(z);
+	AMG_precond_data_destroy(MatrixData->amg_precond_data);
 
 	return 0;
 }

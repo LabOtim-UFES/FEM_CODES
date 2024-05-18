@@ -1,6 +1,3 @@
-#ifndef _scaling_h_
-#define _scaling_h_
-
 #ifdef SSTranspEquation2D
 	#include "../../01_SS_Transport_Equation/2D/01_CommonFiles/SSTranspEquation.h"
 	int NO_scaling(ParametersType *, MatrixDataType *, FemStructsType *); 
@@ -30,6 +27,4 @@
 	int NO_scaling(ParametersType *, MatrixDataType *, FemStructsType *); 
 	int Block_scaling_EBE(ParametersType *, MatrixDataType *, FemStructsType *); 
 	int NO_unscaling(ParametersType *, MatrixDataType *, FemStructsType *, double *); 
-#endif
-
 #endif
