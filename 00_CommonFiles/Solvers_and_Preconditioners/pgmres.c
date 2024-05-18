@@ -1,22 +1,23 @@
 #include "solvers.h"
 #include "preconditioners.h"
+#include "../Reordering/reordering.h"
+
 
 int pgmres (ParametersType *Parameters,	MatrixDataType *MatrixData, FemStructsType *FemStructs,
-			FemFunctionsType *FemFunctions)
+			FemFunctionsType *FemFunctions, double *B, double *X)
 {
 
 	int i, j, k, l, cont, kmax, lmax, neq;
 	double normb, normb2, ui2, uip12, r2, eps, r, rho, soma, h1, h2;
 	double tol;
 	double **u, **h;
-	double *c, *s, *y, *e, *z, *v, *B, *X;
+	double *u_aux, *h_aux;
+	double *c, *s, *y, *e, *z, *v;
 
 	kmax = Parameters->KrylovBasisVectorsQuantity;
 	lmax = Parameters->SolverMaxIter; //printf("SOLVER MAX ITER DENTRO GMRES: %d\n", lmax);
 	neq = Parameters->neq;
 	tol = Parameters->SolverTolerance;
-	B = FemStructs->F;
-	X = FemStructs->u;
 
 /*	printf("\nVetor B=F Global dentro do solver\n");
 		for(i = 0; i <= neq; i++){
@@ -25,22 +26,21 @@ int pgmres (ParametersType *Parameters,	MatrixDataType *MatrixData, FemStructsTy
 	getchar();*/
 
 	u = (double**) mycalloc("u of 'gmres'",kmax+1,sizeof(double));
-	//u_aux = (double*) mycalloc("u_aux of 'gmres'",(kmax+1)*(neq+1),sizeof(double));
-	for (i = 0; i < (kmax+1); i++){
-		u[i] = (double*) mycalloc("u[i] of 'gmres'",(neq+1),sizeof(double)); //&u_aux[i*(neq+1)];
-	}
-	h = (double**) mycalloc("h of 'gmres'",(kmax+1),sizeof(double*));
-	//h_aux = (double*) mycalloc("h_aux of 'gmres'", (kmax+1)*(kmax+1) ,sizeof(double*));
-	for (i = 0; i < (kmax+1); i++){
-		h[i] = (double*) mycalloc("h[i] of 'gmres'", (kmax+1) ,sizeof(double*)); //&h_aux[i*(kmax+1)];
-	}
-	e = (double*) mycalloc("e of 'gmres'",kmax+1,sizeof(double));
-	c = (double*) mycalloc("c of 'gmres'",kmax,sizeof(double));
-	s = (double*) mycalloc("s of 'gmres'",kmax,sizeof(double));
-	y = (double*) mycalloc("y of 'gmres'",kmax,sizeof(double));
-	v = (double*) mycalloc("z of 'gmres'",neq + 1,sizeof(double));
-	z = (double*) mycalloc("z of 'gmres'",neq + 1,sizeof(double));
+	u_aux = (double*) mycalloc("u_aux of 'gmres'",(kmax+1)*(neq+1),sizeof(double));
+	for (i = 0; i <= kmax; i++)
+		u[i] = &u_aux[i*(neq+1)];
 
+	h = (double**) mycalloc("h of 'gmres'",kmax+1,sizeof(double*));
+	h_aux = (double*) mycalloc("h_aux of 'gmres'", (kmax+1)*(kmax+1) ,sizeof(double*));
+	for (i = 0; i <= kmax; i++)
+		h[i] = &h_aux[i*(kmax+1)];
+		
+	e = (double*) mycalloc("e of 'gmres'",kmax+1,sizeof(double));
+	c = (double*) mycalloc("c of 'gmres'",kmax+1,sizeof(double));
+	s = (double*) mycalloc("s of 'gmres'",kmax+1,sizeof(double));
+	y = (double*) mycalloc("y of 'gmres'",kmax+1,sizeof(double));
+	v = (double*) mycalloc("z of 'gmres'",neq+1,sizeof(double));
+	z = (double*) mycalloc("z of 'gmres'",neq+1,sizeof(double));
 
 	// Inicializa matrizes e vetores com zero
 	dzero(neq, X);
@@ -57,9 +57,6 @@ int pgmres (ParametersType *Parameters,	MatrixDataType *MatrixData, FemStructsTy
 
 	do
 	{
-
-	//	printf("Entrou no primeiro DO!\n");
-
 		i = 0;
 		for(j = 0; j < kmax; j++)
 			dzero(neq, u[j]);
@@ -181,24 +178,29 @@ int pgmres (ParametersType *Parameters,	MatrixDataType *MatrixData, FemStructsTy
 		}
 		l++;
 
+		#ifdef debug
+			printf("\n Cicle: %d -> Iteration: %d\n", l, i+1); 
+		#endif
+
 	}while((rho > eps)&&(l<lmax));
 
-	#ifdef debug
-		printf(" Iteracoes GMRES: %d \n", cont);
-	#endif
-	// Parameters->ResGMRES = rho;
-	// Parameters->ContGMRES = cont;
+	//#ifdef debug
+	//printf(" Iteracoes GMRES: %d \n", cont);
+	//getchar();
+	//#endif
+	Parameters->ResGMRES = rho;
+	Parameters->ContGMRES = cont;
 	Parameters->SolverIterations += cont;
 
-	FemFunctions->precondR (Parameters, MatrixData, FemStructs, X, X);
+	#ifdef debug
+		printf("\n Total iteration in this execution GMRES: %d\n", cont); 
+	#endif
 
-	for (i = 0; i < (kmax+1); i++){
-		myfree(u[i]);
-		myfree(h[i]);
-	}
-	//myfree(u_aux);
+	FemFunctions->precondR(Parameters, MatrixData, FemStructs, X, X);
+
+	myfree(u_aux);
 	myfree(u);
-	//myfree(h_aux);
+	myfree(h_aux);
 	myfree(h);
 	myfree(e);
 	myfree(c);
